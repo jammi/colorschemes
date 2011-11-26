@@ -4,6 +4,12 @@
 .color_default_fg {
   background-color: #817d6d;
 }
+.color_bold {
+  background-color: #f9ab4a;
+}
+.color_bold_fg {
+  color: #f9ab4a;
+}
 .color_cursor {
   background-color: #bfef2f;
 }
