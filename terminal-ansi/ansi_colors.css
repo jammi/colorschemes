@@ -1,0 +1,44 @@
+.color_default_bg {
+  background-color: #161818;
+}
+.color_default_fg {
+  background-color: #817d6d;
+}
+.color_cursor {
+  background-color: #bfef2f;
+}
+.color_selection {
+  background-color: #8e2f8f;
+}
+.color_ansi_0 { /* ANSI Black */
+  background-color: #000000; }
+.color_ansi_1 { /* ANSI Red */
+  background-color: #f3643b; }
+.color_ansi_2 { /* ANSI Green */
+  background-color: #5cbf3e; }
+.color_ansi_3 { /* ANSI Yellow */
+  background-color: #cec54b; }
+.color_ansi_4 { /* ANSI Blue */
+  background-color: #004dba; }
+.color_ansi_5 { /* ANSI Purple */
+  background-color: #be3ebf; }
+.color_ansi_6 { /* ANSI Cyan */
+  background-color: #3bc18c; }
+.color_ansi_7 { /* ANSI White */
+  background-color: #f1f0dc; }
+.color_ansi_8 { /* ANSI Bright Black */
+  background-color: #414039; }
+.color_ansi_9 { /* ANSI Bright Red */
+  background-color: #f6956c; }
+.color_ansi_10 { /* ANSI Bright Green */
+  background-color: #a0f276; }
+.color_ansi_11 { /* ANSI Bright Yellow */
+  background-color: #fff87f; }
+.color_ansi_12 { /* ANSI Bright Blue */
+  background-color: #5993ed; }
+.color_ansi_13 { /* ANSI Bright Purple */
+  background-color: #f075f1; }
+.color_ansi_14 { /* ANSI Bright Cyan */
+  background-color: #71f4c8; }
+.color_ansi_15 { /* ANSI Bright White */
+  background-color: #ffffff; }
