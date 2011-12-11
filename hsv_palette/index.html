@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html><head><title>Color Palette</title>
+<style>
+.color_swatch_item {
+  position: absolute; width: 22px; height: 22px; line-height: 22px;
+  font-size: 10px; font-family: sans-serif; vertical-align: middle;
+  text-align: center;
+}
+</style>
+<script src="client/js/rsence.js"></script><script>
+var
+ColorGrid = HView.extend({
+  hsvToRgb: function( h, s, v ){
+    if( s === 0 ) {
+      v = Math.round( v * 255 );
+      return [ v, v, v ];
+    }
+    h /= 60;
+    var
+    i = Math.floor( h ),
+    f = h - i,
+    p = v * ( 1 - s ),
+    q = v * ( 1 - s * f ),
+    t = v * ( 1 - s * ( 1 - f ) ),
+    color,
+    c = 0,
+    rgb = [];
+    switch( i ){
+      case 0: color = [ v, t, p ]; break;
+      case 1: color = [ q, v, p ]; break;
+      case 2: color = [ p, v, t ]; break;
+      case 3: color = [ p, q, v ]; break;
+      case 4: color = [ t, p, v ]; break;
+      default: color = [ v, p, q ]; // 5
+    };
+    for( ; c < 3; c++ ){
+      rgb.push( Math.round( color[c]*255 ) );
+    }
+    return rgb;
+  },
+  destroyGrid: function(){
+    if( this.gridItems ){
+      for( var i = 0; i < this.gridItems.length; i++ ){
+        ELEM.del( this.gridItems[i] );
+      }
+    }
+    this.gridItems = null;
+  },
+  die: function(){
+    this.destroyGrid();
+    this.base();
+  },
+  rgbToHex: function( rgb ){
+    var
+    hex = [ '00', '00', '00' ],
+    i = 0,
+    c;
+    for( ; i < 3; i++ ){
+      c = rgb[i];
+      if( c < 16 ){
+        hex[i] = [ '0', c.toString(16) ].join('');
+      }
+      else {
+        hex[i] = c.toString(16);
+      }
+    }
+    return '#'+hex.join('');
+  },
+  drawGrid: function( h, s, v, step, colWrap, sCut, sMul, vCut, vMul ){
+    sCut = ( sCut !== undefined ? sCut : 0.7 );
+    sMul = ( sMul !== undefined ? sMul : 0.83 );
+    vCut = ( vCut !== undefined ? vCut : 0.05 );
+    vMul = ( vMul !== undefined ? vMul : 0.93 );
+    var
+    gridParent = ELEM.make( this.elemId, 'span' ),
+    gridItems = [],
+    x = 0,
+    y = 0,
+    col = 0,
+    i = 0,
+    colWidth = 22,
+    rowHeight = 22,
+    os = s,
+    rgb,
+    elem;
+    ELEM.setStyle( gridParent, 'visibility', 'hidden', true );
+    while( v > vCut ){
+      h = h + step;
+      if( h >= 360 ){
+        h -= Math.floor(h/360)*360;
+        s *= sMul;
+        if( s <= sCut ){
+          s = os;
+          v *= vMul;
+        }
+      }
+      if( col == colWrap ){
+        y += rowHeight;
+        x = 0;
+        col = 0;
+      }
+      rgb = this.rgbToHex( this.hsvToRgb( h, s, v ) );
+      elem = ELEM.make( gridParent );
+      gridItems.push( elem );
+      ELEM.addClassName( elem, 'color_swatch_item' );
+      ELEM.setStyle( elem, 'left', x+'px' );
+      ELEM.setStyle( elem, 'top', y+'px' );
+      ELEM.setStyle( elem, 'background-color', rgb );
+      ELEM.setHTML( elem, i );
+      ELEM.setAttr( elem, 'title', 'hsv('+h+','+s+','+v+')\nrgb('+rgb+')' );
+      x += colWidth;
+      col += 1;
+      i += 1;
+      if( i > 1000 ){
+        v = 0;
+      }
+    }
+    ELEM.setStyle( gridParent, 'visibility', 'visible' );
+    ELEM.flushLoop();
+    this.destroyGrid();
+    gridItems.push( gridParent );
+    this.gridItems = gridItems;
+    this.rect.setWidth( colWrap * 22 );
+    this.rect.setHeight( y + 22 );
+    this.drawRect();
+  }
+});
+ColorPalette = HView.extend({
+  refreshColorGrid: function(){
+    if(!this.colorGrid){ return; }
+    var
+    h = this.values.h.value,
+    step = this.values.step.value,
+    s = this.values.s.value,
+    sMul = this.values.sMul.value,
+    sCut = this.values.sCut.value,
+    v = this.values.v.value,
+    vMul = this.values.vMul.value,
+    vCut = this.values.vCut.value,
+    colWrap = Math.round( this.values.colWrap.value );
+    this.colorGrid.drawGrid( h, s, v, step, colWrap, sCut, sMul, vCut, vMul );
+  },
+  drawSubviews: function(){
+    var
+    h = HValue.nu( false, 0 ),
+    step = HValue.nu( false, 133 ),
+    s = HValue.nu( false, 1 ),
+    sMul = HValue.nu( false, 0.83 ),
+    sCut = HValue.nu( false, 0.7 ),
+    v = HValue.nu( false, 1 ),
+    vMul = HValue.nu( false, 0.93 ),
+    vCut = HValue.nu( false, 0.05 ),
+    colWrap = HValue.nu( false, 8 ),
+    rectTmpl = HRect.nu( 0, 0, 80, 24 ),
+    labels = [ '<b>Hue:</b>', '..step:', '<b>Saturation:</b>', '..multiplier:', '..cutoff', '<b>Lightness:</b>', '..multiplier', '..cutoff:', '<b>Columns:</b>' ],
+    i = 0;
+    for( ; i<labels.length; i++ ){
+      HStringView.nu( HRect.nu( rectTmpl ), this, { value: labels[i], style: { textAlign: 'right' } } );
+      rectTmpl.offsetBy( 0, 26 );
+    }
+    rectTmpl.offsetTo( rectTmpl.right+8, 0 );
+    rectTmpl.setWidth( 256 );
+    HSlider.nu( HRect.nu( rectTmpl ), this, { valueObj: h, minValue: 0, maxValue: 359 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HSlider.nu( HRect.nu( rectTmpl ), this, { valueObj: step, minValue: 1, maxValue: 359 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HSlider.nu( HRect.nu( rectTmpl ), this, { valueObj: s, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HSlider.nu( HRect.nu( rectTmpl ), this, { valueObj: sMul, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HSlider.nu( HRect.nu( rectTmpl ), this, { valueObj: sCut, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HSlider.nu( HRect.nu( rectTmpl ), this, { valueObj: v, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HSlider.nu( HRect.nu( rectTmpl ), this, { valueObj: vMul, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HSlider.nu( HRect.nu( rectTmpl ), this, { valueObj: vCut, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HSlider.nu( HRect.nu( rectTmpl ), this, { valueObj: colWrap, minValue: 1, maxValue: 64, roundValue: true } );
+    rectTmpl.offsetTo( rectTmpl.right+8, 0 );
+    rectTmpl.setWidth( 50 );
+    HNumericTextControl.nu( HRect.nu( rectTmpl ), this, { valueObj: h, minValue: 0, maxValue: 359 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HNumericTextControl.nu( HRect.nu( rectTmpl ), this, { valueObj: step, minValue: 1, maxValue: 359 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HNumericTextControl.nu( HRect.nu( rectTmpl ), this, { valueObj: s, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HStringView.nu( HRect.nu( rectTmpl ), this, { valueObj: sMul, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HStringView.nu( HRect.nu( rectTmpl ), this, { valueObj: sCut, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HNumericTextControl.nu( HRect.nu( rectTmpl ), this, { valueObj: v, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HStringView.nu( HRect.nu( rectTmpl ), this, { valueObj: vMul, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HStringView.nu( HRect.nu( rectTmpl ), this, { valueObj: vCut, minValue: 0, maxValue: 1 } );
+    rectTmpl.offsetBy( 0, 26 );
+    HNumericTextControl.nu( HRect.nu( rectTmpl ), this, { valueObj: colWrap, minValue: 1, maxValue: 64 } );
+    this.values = {
+      h: h,
+      step: step,
+      s: s,
+      sMul: sMul,
+      sCut: sCut,
+      v: v,
+      vMul: vMul,
+      vCut: vCut,
+      colWrap: colWrap
+    };
+    HValueAction.nu( null, this, { action: 'refreshColorGrid', valueObj: h } );
+    HValueAction.nu( null, this, { action: 'refreshColorGrid', valueObj: step } );
+    HValueAction.nu( null, this, { action: 'refreshColorGrid', valueObj: s } );
+    HValueAction.nu( null, this, { action: 'refreshColorGrid', valueObj: sMul } );
+    HValueAction.nu( null, this, { action: 'refreshColorGrid', valueObj: sCut } );
+    HValueAction.nu( null, this, { action: 'refreshColorGrid', valueObj: v } );
+    HValueAction.nu( null, this, { action: 'refreshColorGrid', valueObj: vMul } );
+    HValueAction.nu( null, this, { action: 'refreshColorGrid', valueObj: vCut } );
+    HValueAction.nu( null, this, { action: 'refreshColorGrid', valueObj: colWrap } );
+    this.colorGrid = ColorGrid.nu( [ 0, 0, 10, 10 ], this.parent );
+    this.bringToFront();
+    this.refreshColorGrid();
+  }
+}),
+RSenceInit = function(){
+  RSence.clientConf( './client' );
+},
+start = function(){
+  ColorPalette.nu( [ null, 0, 420, 240, 0, null ], HApplication.nu(), {
+    style: {
+      backgroundColor: '#dddddd',
+      border: '1px solid #666666',
+      opacity: 0.9
+    }
+  } );
+};
+LOAD( start );
+</script></head><body></body></html>
